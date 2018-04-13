@@ -336,12 +336,12 @@ select * from contact12 where city like  'i%';
 select * into #temp from contact12
 
 -----------------------------------------------------------------------------------------
-select * from #temp;
-
+select * from #temp;     --temp table exist till current session(Query Window) exist.
+-----------------------------------------------------------------------------------------
 
 select salary As 'old salry'  ,salary+10000 as 'new salary' ,city from contact12 where city like 'i%'  
 
-
+-----------------------------------------------------------------------------------------
 
 select c.fname,c.lnme,p.productDesc,b.ProductID
 from Customer c inner join BOOKING b on C.CustID=B.CustID inner join 
