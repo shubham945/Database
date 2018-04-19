@@ -26,8 +26,6 @@ select top 1 max(salary),first_name from contact12 group by First_name;
 
  select first_name,salary from contact12 where 
  salary = (select max(salary) from contact12)
- 
-
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -284,11 +282,13 @@ end
 SSRS_TESTING
 
 
-sp_helptext SSRS_testing
+sp_helptext SSRS_testing   --code of store procedure and view
 
-sp_help ssrs_testing
+sp_help ssrs_testing       --
 
 sp_depends ssrs_testing
+
+sp_rename
 
 ------------------------------------output Procedure--------------------------------------------------------------------------------
 create proc EmpDetailsCount
@@ -346,8 +346,50 @@ select salary As 'old salry'  ,salary+10000 as 'new salary' ,city from contact12
 select c.fname,c.lnme,p.productDesc,b.ProductID
 from Customer c inner join BOOKING b on C.CustID=B.CustID inner join 
 PRODUCTS p on P.ProductID=B.ProductID 
+-----------------------------------------------------------------------------------------
+
+ --trigger---
+
+ select * from contact12
+ insert into contact12 values('mishra','naman','nerul','thane','MH','Male',15000)
+
+ select * from contact_audit
+
+ create table Contact_audit(contact_id int, first_name varchar(15), last_name varchar(15), salary money) 
+
+ create trigger audit_trigger ON contact12
+ for insert
+ as
+ declare @id int,
+ @first_name varchar(15),
+  @last_name varchar(15),
+  @salary money
+
+  select @id = i.contact_id from inserted i;
+  select @first_name=i.first_name from inserted i;
+  select @last_name=i.last_name from inserted i;
+  select @salary=i.salary from inserted i;
+  
+  insert into Contact_audit(contact_id, first_name, last_name, salary) values (@id,@first_name,@last_name,@salary);
+  print 'After insertion'
+  go
 
 
+ alter trigger audit_trigger ON contact12
+ for insert
+ as
+ declare @id int,
+ @first_name varchar(15),
+  @last_name varchar(15),
+  @salary money 
 
+  select @id = i.contact_id from inserted i;
+  select @first_name=i.first_name from inserted i;
+  select @last_name=i.last_name from inserted i;
+  select @salary = i.salary*2 from inserted i;
 
-
+   if (@salary!<2000)
+   print 'salary 2000 less';
+   else
+  insert into Contact_audit(contact_id, first_name, last_name, salary) values (@id,@first_name,@last_name,@salary);
+  go
