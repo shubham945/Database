@@ -326,7 +326,7 @@ begin
 select * from contact12 where city like 'i%' And Salary between 2000 and 25000
  end
 
- Exec sp_rename 'chutiyapa' ,'India'
+ Exec sp_rename 'chutiyapa' ,'India'  -- Rename procedure name..
 
  india
 
@@ -339,7 +339,7 @@ select * into #temp from contact12
 select * from #temp;     --temp table exist till current session(Query Window) exist.
 -----------------------------------------------------------------------------------------
 
-select salary As 'old salry'  ,salary+10000 as 'new salary' ,city from contact12 where city like 'i%'  
+select salary As 'old salry' , salary+10000 as 'new salary' ,city from contact12 where city like 'i%'  
 
 -----------------------------------------------------------------------------------------
 
@@ -349,15 +349,14 @@ PRODUCTS p on P.ProductID=B.ProductID
 -----------------------------------------------------------------------------------------
 
  --trigger---
-
+  select * from contact_audit
  select * from contact12
- insert into contact12 values('mishra','naman','nerul','thane','MH','Male',15000)
+ insert into contact12 values('ranvijay','dhole','pen','mmbai','MH','Male',150000)
 
- select * from contact_audit
 
  create table Contact_audit(contact_id int, first_name varchar(15), last_name varchar(15), salary money) 
 
- create trigger audit_trigger ON contact12
+ create trigger audit_trigger ON contact12       --- insert trigger with condition
  for insert
  as
  declare @id int,
@@ -373,23 +372,102 @@ PRODUCTS p on P.ProductID=B.ProductID
   insert into Contact_audit(contact_id, first_name, last_name, salary) values (@id,@first_name,@last_name,@salary);
   print 'After insertion'
   go
+---------------------------------------------------------------------------------------------------------------------------
 
-
- alter trigger audit_trigger ON contact12
+ alter trigger audit_trigger ON contact12   -- Alter the above Trigger
  for insert
  as
  declare @id int,
  @first_name varchar(15),
-  @last_name varchar(15),
-  @salary money 
+ @last_name varchar(15),
+ @salary money 
 
   select @id = i.contact_id from inserted i;
   select @first_name=i.first_name from inserted i;
   select @last_name=i.last_name from inserted i;
-  select @salary = i.salary*2 from inserted i;
+  select @salary = i.salary from inserted i;
 
-   if (@salary!<2000)
-   print 'salary 2000 less';
-   else
+   
+   if (@salary> 2000)    
+
   insert into Contact_audit(contact_id, first_name, last_name, salary) values (@id,@first_name,@last_name,@salary);
   go
+----------------------------------------------------------------------------------------
+ select * from contact12
+ -----------------------------------------------------------------------------------------
+ create table Employee_Demo_Audit   -- new table for auditing Employe Event
+(
+ Emp_ID int,
+ Emp_Name varchar(55),
+ Emp_Sal money,
+ Audit_Action varchar(100),
+ Audit_Timestamp datetime
+)
+-----------------------------------------------------------------------------------------
+select * from Employee_Demo_Audit;
+-----------------------------------------------------------------------------------------
+
+create trigger Emp_demo_trigger On contact12     --update trigger 
+for update
+as
+declare @Emp_id int , @emp_name varchar(15), @Emp_salary money, @audit_action varchar(100)
+
+select @Emp_id = i.contact_ID from inserted i;
+select @emp_name = i.first_name from inserted i;
+select @Emp_salary=i.salary from inserted i;
+
+set @audit_action='Recoder Update'
+
+if update (salary)
+insert into Employee_Demo_Audit(emp_id,emp_name,Emp_sal,Audit_Action,Audit_Timestamp) values (@Emp_id,@Emp_name,@Emp_salary,@audit_action,GETDATE())
+go
+-----------------------------------------------------------------------------------------
+insert into contact12 values('MAyuri','dhole','pen','mmbai','MH','Male',150)
+update contact12 set Salary=50000 where first_name = 'mayur'
+-----------------------------------------------------------------------------------------
+alter trigger delete_Trigger On contact12         --- delete Trigger
+for delete
+as
+declare @emp_id int , @emp_name varchar(12), @emp_sal money, @audit_action varchar(100)
+
+select @emp_id = i.contact_id from deleted i;                      -- deleted instead of inserted
+select @emp_name =i.first_name from deleted i;
+select @emp_sal =i.salary from deleted i;
+set @audit_action= 'deleted Data'
+
+insert into Employee_Demo_Audit(emp_id,emp_name,Emp_Sal,Audit_Action,Audit_Timestamp)values(@emp_id,@emp_name,@emp_sal,@audit_action,GETDATE())
+go
+-----------------------------------------------------------------------------------------
+ select * from contact12
+
+ delete from contact12 where contact_ID=1045
+ -----------------------------------------------------------------------------------------  
+ ---------Instead of insert trigger---------------
+
+alter trigger instead_insert_trigger On contact12
+
+ instead of insert
+ as
+ declare @emp_id int , @emp_name varchar(20), @emp_sal money, @Audit_action varchar(20)
+
+ select @emp_id=i.contact_id from inserted i;
+ select @emp_name=i.first_name from inserted i;
+ select @emp_sal= i.salary from inserted i;
+ set @Audit_action ='data inserted'
+
+ begin
+ begin tran
+ set nocount off
+
+ if(@emp_sal<15000)
+begin
+RAISERROR('salary should be greter than 15000',16,1);
+rollback; 
+end
+else 
+begin
+insert into Employee_Demo_Audit(emp_id,emp_name,Emp_Sal,Audit_Action,Audit_Timestamp)values(@emp_id,@emp_name,@emp_sal,@audit_action,GETDATE());
+COMMIT; 
+end
+end
+
