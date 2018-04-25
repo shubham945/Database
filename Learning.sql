@@ -470,4 +470,43 @@ insert into Employee_Demo_Audit(emp_id,emp_name,Emp_Sal,Audit_Action,Audit_Times
 COMMIT; 
 end
 end
+ -----------------------------------------------------------------------------------------  
+
+alter trigger instead_update On contact12
+ instead of delete
+ as
+ declare @id int, @name varchar, @salary money,@Action varchar(100)
+
+ select @id=i.contact_ID from deleted i;
+ select @name =i.first_name from deleted i;
+ select @salary =i.Salary from deleted i;
+ set @Action='succsessfully update';
+
+ begin
+ begin tran
+ set nocount on
+ if(@salary> 15000)
+ begin
+ raiserror ('salary should be greater than 15k',16,1);
+ rollback;
+ end
+ else
+ begin
+ insert into Employee_Demo_Audit values(@id,@name,@salary,@Action,GETDATE())
+ commit;
+ end 
+ end
+
+ --------------------------------------------------------------------------------------------------------------
+ -----Cursor--------
+
+
+
+ select * from contact12 where contact_ID=1024
+
+ update contact12 set Salary=25000 where contact_ID=1
+
+ -----------------------------------------------------------------------------------------  
+ delete from Employee_Demo_Audit where Emp_Name='NULL';
+
 
