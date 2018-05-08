@@ -8,9 +8,9 @@ Address varchar(10),
 city char(20),
 State char(10),
 Gender char(10), 
-Salary money   );
+Salary money);
 -------------------------------------------------------------------------------------------------------------------------------------
-select * from contact12;
+select * from contact12 order by salary desc;
 -------------------------------------------------------------------------------------------------------------------------------------
 select max(Salary) from contact12 where salary < (select max(Salary) from contact12 where salary < (select max(salary) from contact12))
 -------------------------------------------------------------------------------------------------------------------------------------
@@ -56,7 +56,11 @@ alter table contact12 drop column contact_ID;
 -------------------------------------------------------------------------------------------------------------------------------------
 --RANK FUNCTION
 
-select last_name,first_name,city,salary, dense_rank() over(order by salary desc) as Rank   from contact12 ;
+select last_name,first_name,city,salary, dense_rank() over(order by salary desc) as Rank   from contact12;
+
+Select last_name, first_name,city,salary, ROW_NUMBER() over(order by salary) as rank from contact12;
+
+select last_name,first_name,city, RANK() over (order by salary) as rank from contact12;
 
 select gender , salary,  DENSE_RANK() over(partition by Gender order by salary desc) as RANk from contact12;
 
@@ -80,7 +84,7 @@ select last_name,first_name,city,salary, NTILE(5) over(order by salary desc) as 
 -------------------------------------------------------------------------------------------------------------------------------------
 with T as 
 ( 
-select first_name, salary , DENSE_RANK() over(order by salary desc)as rank from contact12
+select first_name, salary , DENSE_RANK() over(order by salary desc)as rank from contact12    --common Excution table.
 )
 select * from t where rank=2;
 
@@ -116,6 +120,8 @@ select Fullname from employeedetails
 where id in(select  id from empSalary where
 salary between 5000 and 10000)
 
+select e.fullname , s.id from employeedetails e inner join empSalary s on e.id=s.id where salary between 5000 and 10000
+
 select * from employeedetails
 select * from empSalary
 
@@ -148,6 +154,7 @@ join employeedetails M on E.id=m.managerid
 
 
 select * from employeedetails where id in (select Id from empSalary) 
+
 
 SELECT * FROM EmployeeDetails E 
 WHERE EXISTS 
@@ -191,7 +198,7 @@ select * from new_Table;
 -- VIEW--
 --     --
 
-CREATE TABLE PRODUCTS
+create TABLE PRODUCTS
 (ProductID INT PRIMARY KEY CLUSTERED,
 ProductDesc VARCHAR(50) NOT NULL,
 ManufacturingDate DATETIME,
@@ -237,8 +244,7 @@ select * from PRODUCTS;
 select * from Customer;
 select * from booking;
 
-
-Create view v_Totalamount 
+create view v_Totalamount2 
 As
 select p.productId,p.ProductDesc,c.fname,c.LNme, p.price,b.qty, (p.price * b.qty) as totalAmt from 
 PRODUCTS P 
@@ -246,6 +252,9 @@ inner join booking B On P.ProductID=B.ProductID
 inner join Customer C on C.CustID=B.CustID;
 
 select * from v_Totalamount
+
+
+
 --------------------------------------------------------------------------------------------------------------------------------------------
 ----PROCEDURE--------
 
@@ -498,15 +507,18 @@ alter trigger instead_update On contact12
  end
 
  --------------------------------------------------------------------------------------------------------------
- -----Cursor--------
+--SSRS Procedure
+
+     select state, sum(salary) AS total_salary  from contact12 group by State
+     select * from contact12
+
+     select min(Salary) from contact12 having min(Salary) in ( select top(2) sum(salary) from contact12 group by State order by sum(salary) desc)
+ ---------------------------------------------------------------------------------------------------------------
+     
 
 
 
- select * from contact12 where contact_ID=1024
 
- update contact12 set Salary=25000 where contact_ID=1
 
- -----------------------------------------------------------------------------------------  
- delete from Employee_Demo_Audit where Emp_Name='NULL';
 
 
